@@ -2,7 +2,7 @@ import Axios from 'axios';
 
 import config from '../config';
 
-const axios = Axios.create({ baseURL: config.env.BACKEND_DOMAIN, timeout: 15000 });
+const axios = Axios.create({ baseURL: config.env.BACKEND_DOMAIN, timeout: 55000 });
 
 // TODO: connect server
 
