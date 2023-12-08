@@ -1,0 +1,54 @@
+{
+  "name": "hackaton-team-10-12-chatbot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/main.ts",
+  "scripts": {
+    "clean": "rm -rf dist node_modules",
+    "lint": "eslint 'src/**/*.ts' && prettier --check 'src/**/*.ts'",
+    "build": "tsup",
+    "build:watch": "tsup --watch",
+    "start:dev": "NODE_ENV=development ts-node src/main.ts",
+    "start:dev:watch": "NODE_ENV=development ts-node-dev --respawn src/main.ts",
+    "start:prod": "NODE_ENV=production node --experimental-specifier-resolution=node dist/main.js"
+  },
+  "engines": {
+    "node": ">=20.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.4",
+    "@typescript-eslint/eslint-plugin": "^6.13.2",
+    "@typescript-eslint/parser": "^6.13.2",
+    "eslint": "^8.55.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.0.1",
+    "eslint-plugin-simple-import-sort": "^10.0.0",
+    "prettier": "^3.1.0",
+    "ts-essentials": "^9.4.1",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@grammyjs/conversations": "^1.1.2",
+    "@grammyjs/menu": "^1.2.1",
+    "axios": "^1.6.2",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.0",
+    "dotenv": "^16.3.1",
+    "grammy": "^1.19.2",
+    "reflect-metadata": "^0.1.14"
+  },
+  "packageManager": "npm@10.2.3",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Roma-Kyrnis/hackaton-team-10-12-chatbot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Roma-Kyrnis/hackaton-team-10-12-chatbot/issues"
+  },
+  "homepage": "https://github.com/Roma-Kyrnis/hackaton-team-10-12-chatbot#readme"
+}
