@@ -1,6 +1,47 @@
 import { MyContext, MyConversation } from '.';
 import { createUser, getRegions } from '../../../services/backend';
 
+const regionsTranslate = {
+  vinnytsia: 'Вінницька',
+  volyn: 'Волинська',
+  dnipropetrovsk: 'Дніпропетровська',
+  donetsk: 'Донецька',
+  zhytomyr: 'Житомирська',
+  zakarpattia: 'Закарпатська',
+  zaporizhzhia: 'Запорізька',
+  ivano_frankivsk: 'Івано-Франківська',
+  kyiv: 'Київська',
+  kirovohrad: 'Кіровоградська',
+  luhansk: 'Луганська',
+  lviv: 'Львівська',
+  Lviv: 'Львівська',
+  mykolaiv: 'Миколаївська',
+  odessa: 'Одеська',
+  poltava: 'Полтавська',
+  rivne: 'Рівненська',
+  sumy: 'Сумська',
+  ternopil: 'Тернопільська',
+  kharkiv: 'Харківська',
+  kherson: 'Херсонська',
+  khmelnytskyi: 'Хмельницька',
+  cherkasy: 'Черкаська',
+  chernivtsi: 'Чернівецька',
+  chernihiv: 'Чернігівська',
+  crimea: 'Крим',
+};
+
+const getListUARegions = (regions: string[]) => {
+  const availableRegions: string[] = [];
+  const regionsTranslateEntries = Object.entries(regionsTranslate);
+  for (const region of regions) {
+    const foundRegion = regionsTranslateEntries.find(([key, value]) => region === key);
+    if (foundRegion) {
+      availableRegions.push(foundRegion[1]);
+    }
+  }
+  return availableRegions;
+};
+
 export default async (conversation: MyConversation, ctx: MyContext) => {
   await ctx.reply('Введіть ваше Імя:');
   const username = await conversation.form.text();
@@ -33,10 +74,11 @@ export default async (conversation: MyConversation, ctx: MyContext) => {
   await ctx.reply(`Ваш номер телефону, ${phone}`);
 
   const regions = await getRegions();
-  await ctx.reply('Виберіть область проживання:');
-  const region = await conversation.form.select(
-    regions,
-    ctx => ctx.reply(`Будь-ласка виберіть регіон або місто зі списку: ${regions.join()}`),
+  const translatedRegions = getListUARegions(regions);
+  const usersRegions = `\n- ${translatedRegions.join('\n- ')}`;
+  await ctx.reply(`Виберіть область проживання:${usersRegions}`);
+  const region = await conversation.form.select(translatedRegions, ctx =>
+    ctx.reply(`Будь-ласка виберіть регіон або місто зі списку:${usersRegions}`),
   );
   await ctx.reply(`Область проживання, ${region}`);
 
@@ -48,5 +90,7 @@ export default async (conversation: MyConversation, ctx: MyContext) => {
   await ctx.reply(`Перевірте, чи все вірно вказано:\n\n${finalMessage}`);
 
   await createUser({ username, dateOfBirth, phone, region, takePartInProject });
-  await ctx.reply(`Вітаємо ви зареєстровані як учасник програми «Помічник ветерана»!`);
+  await ctx.reply(`Вітаємо🎉\n Ви зареєстровані в програмі <b>Помічник ветерана</b>`);
+
+  // await ctx.conversation.exit();
 };
