@@ -50,14 +50,24 @@ export default async (conversation: MyConversation, ctx: MyContext) => {
   await ctx.reply('Введіть дату народження:');
   const { msg: dateOfBirthMsg } = await conversation.waitUntil(
     ctx => {
+      const date = ctx.msg?.text;
       // TODO: update Date and move to config
       const dateRegExp = new RegExp(/^\d{1,2}\.\d{1,2}\.\d{2,4}$/);
-      const isDate = dateRegExp.test(ctx.msg?.text ?? '');
+      const isDate = dateRegExp.test(date ?? '');
+      const nowYear = new Date().getFullYear();
+      const year = parseInt(date?.split('.')[2] ?? nowYear.toString(), 10);
+
+      if (nowYear - year < 16) {
+        return false;
+      }
 
       return isDate;
     },
     {
-      otherwise: ctx => ctx.reply('Будь-ласка введіть правильну дату. Наприклад 09.12.2023'),
+      otherwise: ctx =>
+        ctx.reply(
+          'Вам має бути більше 15 років. Будь-ласка введіть правильну дату. Наприклад 09.12.2023',
+        ),
     },
   );
   if (!dateOfBirthMsg) throw new Error('incorrect date of birth');
@@ -89,8 +99,7 @@ export default async (conversation: MyConversation, ctx: MyContext) => {
   const finalMessage = `Ім'я: ${username}\nДата народження: ${dateOfBirth}\nВаш номер телефону, ${phone}\nОбласть проживання: ${region}\nВи сказали ${takePartInProject} на участь в проекті`;
   await ctx.reply(`Перевірте, чи все вірно вказано:\n\n${finalMessage}`);
 
-  await createUser({ username, dateOfBirth, phone, region, takePartInProject });
   await ctx.reply(`Вітаємо🎉\n Ви зареєстровані в програмі <b>Помічник ветерана</b>`);
 
-  // await ctx.conversation.exit();
+  await createUser({ username, dateOfBirth, phone, region, takePartInProject });
 };
