@@ -22,13 +22,32 @@ import {
   partialVisionLossHowToFindJobHears,
   whatGroupChooseWithHearLoosAndLimbsAmputationHears,
 } from './hears/popularQuestions';
+import { stringToMarkdownV2 } from './utils';
 
 bot.use(
   session({
     initial: () => ({}),
   }),
 );
+
 bot.use(initConversations());
+
+bot.command('cancel', async ctx => {
+  console.log('cancel');
+
+  await ctx.reply('Виходимо');
+  await ctx.conversation.exit();
+});
+
+// Always exit the `movie` conversation
+// when the inline keyboard's `cancel` button is pressed.
+bot.callbackQuery('cancel', async ctx => {
+  console.log('callback cancel');
+
+  await ctx.answerCallbackQuery('Виходимо з реєстрації');
+  await ctx.conversation.exit('registration');
+});
+
 // TODO: add to config
 bot.use(createConversation(conversations.registration, { id: 'registration' }));
 
@@ -60,10 +79,11 @@ bot.hears(
   partialVisionLossHowToFindJobHears,
 );
 
-bot.command(
-  'start',
-  ctx => ctx.reply(config.locales.ua.WELCOME_MESSAGE, { reply_markup: mainKeyboard }),
-  // ctx.reply(config.locales.ua.WELCOME_MESSAGE, { reply_markup: mainMenu }),
+bot.command('start', conversations.exitRegistration, ctx =>
+  ctx.reply(stringToMarkdownV2(config.locales.ua.WELCOME_MESSAGE), {
+    reply_markup: mainKeyboard,
+    parse_mode: 'MarkdownV2',
+  }),
 );
 
 export const runBot = () =>
