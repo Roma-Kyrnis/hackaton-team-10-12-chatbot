@@ -1,5 +1,6 @@
 import { MyContext, MyConversation } from '.';
 import { createUser, getRegions } from '../../../services/backend';
+import mainKeyboard from '../keyboards';
 
 const regionsTranslate = {
   vinnytsia: 'Вінницька',
@@ -30,6 +31,14 @@ const regionsTranslate = {
   crimea: 'Крим',
 };
 
+const getRegionEng = (region: string): string => {
+  const regionT = Object.entries(regionsTranslate).find(([key, value]) => value === region);
+  if (!regionT) {
+    throw new Error('Не вірно вказаний регіон');
+  }
+  return regionT[0];
+};
+
 const getListUARegions = (regions: string[]) => {
   const availableRegions: string[] = [];
   const regionsTranslateEntries = Object.entries(regionsTranslate);
@@ -42,13 +51,32 @@ const getListUARegions = (regions: string[]) => {
   return availableRegions;
 };
 
+const ifUserEnteredCommand = async (ctx: MyContext, str: string): Promise<boolean> => {
+  if (!str.startsWith('/')) {
+    return false;
+  }
+
+  await ctx.reply(`${str}`);
+  return true;
+};
+
+let enterConversation;
+
 export default async (conversation: MyConversation, ctx: MyContext) => {
+  if (ctx.conversation?.enter) {
+    enterConversation = ctx.conversation.enter;
+  }
+
   await ctx.reply('Введіть ваше Імя:');
   const username = await conversation.form.text();
+  const isCommand = await ifUserEnteredCommand(ctx, username);
+  if (isCommand) {
+    return;
+  }
   await ctx.reply(`Ваше ім'я, ${username}`);
 
   await ctx.reply('Введіть дату народження:');
-  const { msg: dateOfBirthMsg } = await conversation.waitUntil(
+  const { msg: birthdayMsg } = await conversation.waitUntil(
     ctx => {
       const date = ctx.msg?.text;
       // TODO: update Date and move to config
@@ -70,10 +98,10 @@ export default async (conversation: MyConversation, ctx: MyContext) => {
         ),
     },
   );
-  if (!dateOfBirthMsg) throw new Error('incorrect date of birth');
-  const dateOfBirth = dateOfBirthMsg.text;
+  if (!birthdayMsg) throw new Error('incorrect date of birth');
+  const birthday = birthdayMsg.text;
 
-  await ctx.reply(`Дата народження, ${dateOfBirth}`);
+  await ctx.reply(`Дата народження, ${birthday}`);
 
   await ctx.reply('Введіть ваш номер телефону:');
   const {
@@ -93,13 +121,41 @@ export default async (conversation: MyConversation, ctx: MyContext) => {
   await ctx.reply(`Область проживання, ${region}`);
 
   await ctx.reply('Чи хочете ви взяти участь у програмі «Помічник ветерана»?');
-  const takePartInProject = await conversation.form.select(['Так', 'Ні']);
+  const takePartInProject = await conversation.form.select(['Так', 'Ні'], ctx =>
+    ctx.reply('Будь\\-ласка дайте відповідь *Так* або *Ні*', { parse_mode: 'MarkdownV2' }),
+  );
   await ctx.reply(`Ви сказали ${takePartInProject} на участь в проекті`);
 
-  const finalMessage = `Ім'я: ${username}\nДата народження: ${dateOfBirth}\nВаш номер телефону, ${phone}\nОбласть проживання: ${region}\nВи сказали ${takePartInProject} на участь в проекті`;
-  await ctx.reply(`Перевірте, чи все вірно вказано:\n\n${finalMessage}`);
+  const finalMessage = `Ім'я: ${username}\nДата народження: ${birthday}\nВаш номер телефону, ${phone}\nОбласть проживання: ${region}\nВи сказали ${takePartInProject} на участь в проекті`;
+  await ctx.reply(`Перевірте, чи все вірно вказано?\n\n${finalMessage}`);
 
-  await ctx.reply(`Вітаємо🎉\n Ви зареєстровані в програмі <b>Помічник ветерана</b>`);
+  const isEverythingCorrect = await conversation.form.select(['Так', 'Ні'], ctx =>
+    ctx.reply('Будь\\-ласка дайте відповідь *Так* або *Ні*', { parse_mode: 'MarkdownV2' }),
+  );
 
-  await createUser({ username, dateOfBirth, phone, region, takePartInProject });
+  if (isEverythingCorrect === 'Ні') {
+    return enterConversation('registration');
+  }
+
+  await ctx.reply(`Вітаємо🎉\n Ви зареєстровані в програмі *Помічник ветерана*`, {
+    parse_mode: 'MarkdownV2',
+  });
+  await ctx.reply('Повернення до головного меню', { reply_markup: mainKeyboard });
+
+  // ctx.session = { username: { registered: true } };
+  const birthdayDate = birthday && new Date(birthday.split('.').reverse().join('-')).toISOString();
+
+  const user = {
+    username,
+    birthday: birthdayDate,
+    phoneNumber: phone?.replace('+', ''),
+    location: getRegionEng(region),
+    takePartInProject: takePartInProject === 'Так',
+    telegramName: ctx.from?.first_name,
+    messenger: 'telegram',
+    userStatus: 'veteran',
+  };
+
+  // NOT WORKING
+  await createUser(user);
 };

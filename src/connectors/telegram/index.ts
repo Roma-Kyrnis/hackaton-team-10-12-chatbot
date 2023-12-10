@@ -32,6 +32,8 @@ bot.use(
 
 bot.use(initConversations());
 
+/** START */
+/** Never used, leave for the future. Don't want to dive deep in this logic for now */
 bot.command('cancel', async ctx => {
   console.log('cancel');
 
@@ -47,6 +49,7 @@ bot.callbackQuery('cancel', async ctx => {
   await ctx.answerCallbackQuery('Виходимо з реєстрації');
   await ctx.conversation.exit('registration');
 });
+/** END */
 
 // TODO: add to config
 bot.use(createConversation(conversations.registration, { id: 'registration' }));
